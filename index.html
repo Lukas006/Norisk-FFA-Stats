@@ -48,6 +48,25 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <header class="text-center mb-12">
+            <div class="glass-effect rounded-xl p-4 mb-8 max-w-xl mx-auto">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <img src="https://api.mcstatus.io/v2/icon/java/hglabor.de" alt="Server Icon" class="w-12 h-12 rounded-lg" onerror="this.src='https://eu.mc-api.net/v3/server/favicon/hglabor.de'"/>
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <div id="serverStatus" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                            </div>
+                            <div class="text-left">
+                                <h2 class="font-bold text-lg">HGLabor.de</h2>
+                                <p id="playerCount" class="text-sm text-slate-400">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="copyIP()" class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 px-4 py-2 rounded-lg transition-all">
+                        <span id="ipText">hglabor.de</span>
+                    </button>
+                </div>
+            </div>
             <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text">Hero FFA Stats</h1>
             <p class="text-slate-400">Überprüfe deine Statistiken und vergleiche dich mit anderen Spielern</p>
         </header>
@@ -162,7 +181,7 @@
                     </a>
                     <a href="https://x.com/LetsCookieTV1" target="_blank" class="hover:text-blue-400 transition-colors" title="Twitter">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            <path d="M18.244 4.37h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                         </svg>
                     </a>
                 </div>

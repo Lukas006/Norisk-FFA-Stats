@@ -1,6 +1,49 @@
 let skinViewer = null;
 let currentLeaderboard = 'kills';
 
+// Server status check
+async function checkServerStatus() {
+    try {
+        const response = await fetch('https://api.mcstatus.io/v2/status/java/hglabor.de');
+        const data = await response.json();
+        
+        const statusDot = document.getElementById('serverStatus');
+        const playerCount = document.getElementById('playerCount');
+        
+        if (data.online) {
+            statusDot.classList.remove('bg-gray-500', 'bg-red-500');
+            statusDot.classList.add('bg-green-500');
+            playerCount.textContent = `${data.players.online} Spieler Online`;
+        } else {
+            statusDot.classList.remove('bg-gray-500', 'bg-green-500');
+            statusDot.classList.add('bg-red-500');
+            playerCount.textContent = 'Server Offline';
+        }
+    } catch (error) {
+        console.error('Error checking server status:', error);
+        const statusDot = document.getElementById('serverStatus');
+        const playerCount = document.getElementById('playerCount');
+        statusDot.classList.remove('bg-gray-500', 'bg-green-500');
+        statusDot.classList.add('bg-red-500');
+        playerCount.textContent = 'Status nicht verfügbar';
+    }
+}
+
+// Copy IP function
+function copyIP() {
+    navigator.clipboard.writeText('hglabor.de');
+    const ipText = document.getElementById('ipText');
+    const originalText = ipText.textContent;
+    ipText.textContent = 'IP Kopiert!';
+    setTimeout(() => {
+        ipText.textContent = originalText;
+    }, 2000);
+}
+
+// Check server status every 30 seconds
+checkServerStatus();
+setInterval(checkServerStatus, 30000);
+
 async function fetchStats() {
     const input = document.getElementById('uuidInput').value.trim();
     const statsContainer = document.getElementById('statsContainer');
