@@ -47,7 +47,6 @@ setInterval(checkServerStatus, 30000);
 async function fetchStats() {
     const input = document.getElementById('uuidInput').value.trim();
     const statsContainer = document.getElementById('statsContainer');
-    const skillStats = document.getElementById('skillStats');
 
     if (!input) {
         showError('Bitte gib einen Username oder eine UUID ein');
@@ -77,6 +76,9 @@ async function fetchStats() {
 
         const data = await response.json();
 
+        // Debug logging
+        console.log('Fetched player data:', data);
+
         // Update basic stats
         document.getElementById('kills').textContent = data.kills || 0;
         document.getElementById('deaths').textContent = data.deaths || 0;
@@ -85,23 +87,11 @@ async function fetchStats() {
         document.getElementById('gamesPlayed').textContent = data.gamesPlayed || 0;
         document.getElementById('winRate').textContent = calculateWinRate(data.wins || 0, data.gamesPlayed || 0) + '%';
 
-        // Update skills
-        if (data.skills && Object.keys(data.skills).length > 0) {
-            const skillsHTML = Object.entries(data.skills).map(([skill, level]) => `
-                <div class="stat-card rounded-xl p-4">
-                    <h3 class="text-lg font-semibold text-slate-400 mb-2">${skill.charAt(0).toUpperCase() + skill.slice(1)}</h3>
-                    <p class="text-2xl font-bold text-purple-500">Level ${level}</p>
-                </div>
-            `).join('');
-            skillStats.innerHTML = skillsHTML;
-        } else {
-            skillStats.innerHTML = '<div class="col-span-full text-center text-slate-400">Keine Skills gefunden</div>';
-        }
-
         // Update skin viewer
         await updateSkinViewer(input);
 
     } catch (error) {
+        console.error('Error fetching stats:', error);
         showError(error.message);
         statsContainer.classList.add('hidden');
     }
@@ -152,29 +142,74 @@ function isUUID(str) {
 }
 
 async function loadLeaderboard(type = 'kills') {
-    currentLeaderboard = type;
     const leaderboardContent = document.getElementById('leaderboardContent');
     const leaderboardTitle = document.getElementById('leaderboardTitle');
-    
+
     try {
-        // Show loading state with animation
-        leaderboardContent.innerHTML = `
-            <div class="text-center text-slate-400 animate-pulse">
-                <div class="inline-block w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-2"></div>
-                Lade Leaderboard...
-            </div>`;
-        
-        // Fetch leaderboard data from the top players endpoint
-        const response = await fetch(`https://api.hglabor.de/stats/FFA/top?sort=${type}&page=1`);
+        // Log the current type being requested
+        console.log(`Attempting to load leaderboard for type: ${type}`);
+
+        // Fetch leaderboard data
+        const response = await fetch(`https://api.hglabor.de/stats/ffa/top?sort=${type}&page=1`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        // Log response details
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+        // Check if response is ok
         if (!response.ok) {
-            throw new Error('Fehler beim Laden des Leaderboards');
+            // Try to get error text
+            const errorText = await response.text();
+            console.error('Error response text:', errorText);
+            throw new Error(`Fehler beim Laden des Leaderboards: Status ${response.status}, ${errorText}`);
         }
-        
-        const data = await response.json();
-        
+
+        // Attempt to parse JSON
+        let data;
+        try {
+            data = await response.json();
+            console.log('Received leaderboard data:', data);
+        } catch (parseError) {
+            console.error('JSON parsing error:', parseError);
+            throw new Error('Fehler beim Parsen der Leaderboard-Daten');
+        }
+
+        // Validate data
         if (!Array.isArray(data)) {
+            console.error('Invalid data format:', typeof data, data);
             throw new Error('Ungültiges Datenformat vom Server');
         }
+
+        // Log detailed K/D ratio information if sorting by K/D
+        if (type === 'kd') {
+            console.group('K/D Ratio Debugging');
+            const kdDetails = data.map((player, index) => ({
+                username: player.playerId,
+                kills: player.kills || 0,
+                deaths: player.deaths || 0,
+                kdRatio: ((player.kills || 0) / Math.max(player.deaths || 1, 1)).toFixed(2)
+            }));
+            console.table(kdDetails);
+            console.log('Raw K/D Data:', kdDetails);
+            console.groupEnd();
+        }
+
+        // Set the current leaderboard type
+        currentLeaderboard = type;
+
+        // Modify title based on selected category
+        const titles = {
+            kills: '🎯 Top Kills',
+            deaths: '💀 Top Deaths',
+            wins: '🏆 Top Wins',
+            kd: '⚔️ Top K/D Ratio'
+        };
+        leaderboardTitle.textContent = titles[type];
         
         // Take top 10 and fetch their names
         const sortedData = await Promise.all(
@@ -187,33 +222,35 @@ async function loadLeaderboard(type = 'kills') {
                     
                     return {
                         ...player,
-                        username: nameData.success ? nameData.data.player.username : 'Unbekannt'
+                        username: nameData.success ? nameData.data.player.username : 'Unbekannt',
+                        uuid: formattedUUID
                     };
                 } catch (error) {
+                    console.warn(`Error fetching name for player ${uuid}:`, error);
                     return {
                         ...player,
-                        username: 'Unbekannt'
+                        username: 'Unbekannt',
+                        uuid: formattedUUID
                     };
                 }
             })
         );
         
-        // Update title with animation
-        const titles = {
-            kills: '🎯 Top Kills',
-            deaths: '💀 Top Deaths',
-            wins: '🏆 Top Wins',
-            kd: '⚔️ Top K/D Ratio'
-        };
-        leaderboardTitle.textContent = titles[type];
-        
         // Generate leaderboard HTML
         const leaderboardHTML = sortedData.map((player, index) => {
-            let value;
+            let value, displayValue;
             if (type === 'kd') {
-                value = calculateKD(player.kills || 0, player.deaths || 0);
+                // Calculate K/D ratio
+                const kills = player.kills || 0;
+                const deaths = Math.max(player.deaths || 1, 1);
+                value = kills / deaths;
+                displayValue = value.toFixed(2);
+                
+                // Additional logging for K/D calculation
+                console.log(`Player ${player.username}: Kills=${kills}, Deaths=${deaths}, K/D=${displayValue}`);
             } else {
                 value = player[type] || 0;
+                displayValue = parseInt(value).toLocaleString();
             }
             
             const rankColors = [
@@ -228,23 +265,20 @@ async function loadLeaderboard(type = 'kills') {
                 ? `bg-gradient-to-r ${rankColor} text-transparent bg-clip-text` 
                 : 'text-slate-400';
             
-            // Format the value based on type
-            let formattedValue;
-            if (type === 'kd') {
-                formattedValue = parseFloat(value).toFixed(2);
-            } else {
-                formattedValue = parseInt(value).toLocaleString();
-            }
-            
             return `
                 <div class="leaderboard-row p-4 flex items-center justify-between" style="animation: fadeIn 0.5s ease-in-out ${index * 0.1}s both;">
                     <div class="flex items-center gap-4">
                         <span class="text-lg font-bold ${rankStyle}">
                             ${index < 3 ? rankEmojis[index] : '#' + (index + 1)}
                         </span>
+                        <img 
+                            src="https://mc-heads.net/avatar/${player.uuid}/32" 
+                            alt="${player.username}'s avatar" 
+                            class="w-8 h-8 rounded-full border-2 border-slate-600"
+                        >
                         <span class="font-semibold text-slate-200">${player.username}</span>
                     </div>
-                    <span class="font-bold ${getValueColor(type)} text-lg">${formattedValue}</span>
+                    <span class="font-bold ${getValueColor(type)} text-lg">${displayValue}</span>
                 </div>
             `;
         }).join('');
@@ -266,11 +300,17 @@ async function loadLeaderboard(type = 'kills') {
         document.head.appendChild(style);
         
         leaderboardContent.innerHTML = leaderboardHTML || '<div class="text-center text-slate-400">Keine Daten verfügbar</div>';
+
     } catch (error) {
-        console.error('Leaderboard error:', error);
+        console.error('Detailed Leaderboard Error:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+
         leaderboardContent.innerHTML = `
             <div class="text-center p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                <span class="text-red-500">⚠️ Fehler beim Laden des Leaderboards</span>
+                <span class="text-red-500">⚠️ Fehler beim Laden des Leaderboards: ${error.message}</span>
             </div>`;
     }
 }

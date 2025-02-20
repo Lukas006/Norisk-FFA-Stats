@@ -97,61 +97,56 @@
 
         <!-- Stats and Skin Container -->
         <div id="statsContainer" class="hidden mb-12">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Basic Stats -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h2 class="text-xl font-bold mb-4">Stats</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="stat-card rounded-xl p-4">
-                            <h3 class="text-lg font-semibold text-slate-400 mb-2">Kills</h3>
-                            <p id="kills" class="text-2xl font-bold text-green-500">0</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <h3 class="text-lg font-semibold text-slate-400 mb-2">Deaths</h3>
-                            <p id="deaths" class="text-2xl font-bold text-red-500">0</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <h3 class="text-lg font-semibold text-slate-400 mb-2">K/D Ratio</h3>
-                            <p id="kd" class="text-2xl font-bold text-blue-500">0</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <h3 class="text-lg font-semibold text-slate-400 mb-2">Wins</h3>
-                            <p id="wins" class="text-2xl font-bold text-yellow-500">0</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <h3 class="text-lg font-semibold text-slate-400 mb-2">Spiele</h3>
-                            <p id="gamesPlayed" class="text-2xl font-bold text-purple-500">0</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <h3 class="text-lg font-semibold text-slate-400 mb-2">Win Rate</h3>
-                            <p id="winRate" class="text-2xl font-bold text-orange-500">0%</p>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Skin Viewer -->
                 <div class="glass-effect rounded-xl p-6">
-                    <canvas id="skinViewer" class="w-full"></canvas>
+                    <canvas id="skinViewer" class="w-full max-w-sm mx-auto"></canvas>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="stat-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-slate-400 mb-2">Kills</h3>
+                        <p id="kills" class="text-3xl font-bold text-green-500">0</p>
+                    </div>
+                    <div class="stat-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-slate-400 mb-2">Deaths</h3>
+                        <p id="deaths" class="text-3xl font-bold text-red-500">0</p>
+                    </div>
+                    <div class="stat-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-slate-400 mb-2">K/D Ratio</h3>
+                        <p id="kd" class="text-3xl font-bold text-blue-500">0</p>
+                    </div>
+                    <div class="stat-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-slate-400 mb-2">Wins</h3>
+                        <p id="wins" class="text-3xl font-bold text-yellow-500">0</p>
+                    </div>
+                    <div class="stat-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-slate-400 mb-2">Spiele</h3>
+                        <p id="gamesPlayed" class="text-3xl font-bold text-purple-500">0</p>
+                    </div>
+                    <div class="stat-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-slate-400 mb-2">Win Rate</h3>
+                        <p id="winRate" class="text-3xl font-bold text-orange-500">0%</p>
+                    </div>
                 </div>
             </div>
+            <button 
+                id="advancedStatsButton" 
+                class="hidden mt-4 px-4 py-2 bg-slate-700 text-slate-200 rounded-md hover:bg-slate-600 transition-colors"
+                onclick="window.toggleAdvancedStats()"
+            >
+                Advanced Stats
+            </button>
 
-            <!-- Advanced Stats Button -->
-            <div class="flex justify-center mb-8">
-                <button onclick="toggleAdvancedStats()" class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 px-6 py-2 rounded-lg transition-all flex items-center space-x-2">
-                    <span id="advancedStatsButtonText">Show Advanced Stats</span>
-                    <svg id="advancedStatsIcon" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Advanced Stats Section -->
-            <div id="advancedStats" class="hidden">
-                <div class="glass-effect rounded-xl p-6 mb-8">
-                    <h2 class="text-xl font-bold mb-4">Skills</h2>
-                    <div id="skillStats" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <!-- Skills will be inserted here -->
+            <div id="advancedStatsSection" class="hidden mt-6 p-4 bg-slate-800 rounded-lg transition-all duration-300 ease-in-out">
+                <h3 class="text-xl font-bold mb-4 text-slate-200">Advanced Stats</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-700 p-3 rounded-md">
+                        <p class="text-slate-400 text-sm">Skills</p>
+                        <p id="skillsDisplay" class="text-slate-200 font-semibold">Loading...</p>
                     </div>
+                    <!-- Add more advanced stat items as needed -->
                 </div>
             </div>
         </div>
