@@ -47,8 +47,7 @@ setInterval(checkServerStatus, 30000);
 async function fetchStats() {
     const input = document.getElementById('uuidInput').value.trim();
     const statsContainer = document.getElementById('statsContainer');
-    const playerInfo = document.getElementById('playerInfo');
-    const errorMessage = document.getElementById('errorMessage');
+    const skillStats = document.getElementById('skillStats');
 
     if (!input) {
         showError('Bitte gib einen Username oder eine UUID ein');
@@ -56,6 +55,9 @@ async function fetchStats() {
     }
 
     try {
+        // Show loading state
+        statsContainer.classList.remove('hidden');
+        
         // First, determine if input is UUID or username
         let uuid = input;
         if (!isUUID(input)) {
@@ -74,26 +76,51 @@ async function fetchStats() {
         }
 
         const data = await response.json();
-        
-        // Update stats
-        document.getElementById('kills').textContent = data.kills;
-        document.getElementById('deaths').textContent = data.deaths;
-        document.getElementById('kd').textContent = calculateKD(data.kills, data.deaths);
-        document.getElementById('wins').textContent = data.wins;
-        document.getElementById('gamesPlayed').textContent = data.gamesPlayed;
-        document.getElementById('winRate').textContent = calculateWinRate(data.wins, data.gamesPlayed) + '%';
 
-        // Fetch player name and update skin viewer
-        await updatePlayerInfo(uuid);
+        // Update basic stats
+        document.getElementById('kills').textContent = data.kills || 0;
+        document.getElementById('deaths').textContent = data.deaths || 0;
+        document.getElementById('kd').textContent = calculateKD(data.kills || 0, data.deaths || 0);
+        document.getElementById('wins').textContent = data.wins || 0;
+        document.getElementById('gamesPlayed').textContent = data.gamesPlayed || 0;
+        document.getElementById('winRate').textContent = calculateWinRate(data.wins || 0, data.gamesPlayed || 0) + '%';
 
-        // Show containers and hide error
-        if (playerInfo) playerInfo.classList.remove('hidden');
-        if (errorMessage) errorMessage.classList.add('hidden');
-        if (statsContainer) statsContainer.classList.remove('hidden');
+        // Update skills
+        if (data.skills && Object.keys(data.skills).length > 0) {
+            const skillsHTML = Object.entries(data.skills).map(([skill, level]) => `
+                <div class="stat-card rounded-xl p-4">
+                    <h3 class="text-lg font-semibold text-slate-400 mb-2">${skill.charAt(0).toUpperCase() + skill.slice(1)}</h3>
+                    <p class="text-2xl font-bold text-purple-500">Level ${level}</p>
+                </div>
+            `).join('');
+            skillStats.innerHTML = skillsHTML;
+        } else {
+            skillStats.innerHTML = '<div class="col-span-full text-center text-slate-400">Keine Skills gefunden</div>';
+        }
+
+        // Update skin viewer
+        await updateSkinViewer(input);
+
     } catch (error) {
         showError(error.message);
-        if (playerInfo) playerInfo.classList.add('hidden');
-        if (statsContainer) statsContainer.classList.add('hidden');
+        statsContainer.classList.add('hidden');
+    }
+}
+
+// Toggle Advanced Stats
+function toggleAdvancedStats() {
+    const advancedStats = document.getElementById('advancedStats');
+    const buttonText = document.getElementById('advancedStatsButtonText');
+    const icon = document.getElementById('advancedStatsIcon');
+    
+    if (advancedStats.classList.contains('hidden')) {
+        advancedStats.classList.remove('hidden');
+        buttonText.textContent = 'Hide Advanced Stats';
+        icon.classList.add('rotate-180');
+    } else {
+        advancedStats.classList.add('hidden');
+        buttonText.textContent = 'Show Advanced Stats';
+        icon.classList.remove('rotate-180');
     }
 }
 
@@ -348,13 +375,11 @@ function shortenUUID(uuid) {
 }
 
 function calculateKD(kills, deaths) {
-    if (deaths === 0) return kills.toFixed(2);
-    return (kills / deaths).toFixed(2);
+    return (kills / Math.max(deaths, 1)).toFixed(2);
 }
 
-function calculateWinRate(wins, gamesPlayed) {
-    if (gamesPlayed === 0) return '0.00';
-    return ((wins / gamesPlayed) * 100).toFixed(2);
+function calculateWinRate(wins, games) {
+    return ((wins / Math.max(games, 1)) * 100).toFixed(1);
 }
 
 function showError(message) {
