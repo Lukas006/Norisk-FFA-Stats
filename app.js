@@ -276,7 +276,12 @@ async function loadLeaderboard(type = 'kills') {
                             alt="${player.username}'s avatar" 
                             class="w-8 h-8 rounded-full border-2 border-slate-600"
                         >
-                        <span class="font-semibold text-slate-200">${player.username}</span>
+                        <span 
+                            class="font-semibold text-slate-200 cursor-pointer hover:text-blue-400 transition-colors"
+                            onclick="showPlayerPreview(${JSON.stringify(player).replace(/"/g, '&quot;')}, event)"
+                        >
+                            ${player.username}
+                        </span>
                     </div>
                     <span class="font-bold ${getValueColor(type)} text-lg">${displayValue}</span>
                 </div>
@@ -428,6 +433,78 @@ function showError(message) {
         errorMessage.textContent = message;
         errorMessage.classList.remove('hidden');
     }
+}
+
+// Function to create and show player preview
+function showPlayerPreview(player, event) {
+    // Remove any existing previews
+    const existingPreview = document.getElementById('leaderboard-player-preview');
+    if (existingPreview) {
+        existingPreview.remove();
+    }
+
+    // Create preview container
+    const preview = document.createElement('div');
+    preview.id = 'leaderboard-player-preview';
+    preview.className = `
+        fixed z-50 bg-slate-800 rounded-lg shadow-2xl border border-slate-700 
+        transition-all duration-300 ease-in-out transform 
+        opacity-0 scale-90 pointer-events-none
+    `;
+
+    // Position the preview near the clicked element
+    const rect = event.target.getBoundingClientRect();
+    preview.style.top = `${rect.bottom + window.scrollY + 10}px`;
+    preview.style.left = `${rect.left + window.scrollX}px`;
+
+    // Prepare preview content
+    preview.innerHTML = `
+        <div class="p-6 flex items-center space-x-4">
+            <img 
+                src="https://mc-heads.net/avatar/${player.uuid}/64" 
+                alt="${player.username}'s avatar" 
+                class="w-16 h-16 rounded-full border-4 border-slate-600"
+            >
+            <div>
+                <h3 class="text-xl font-bold text-white">${player.username}</h3>
+                <div class="mt-2 space-y-1 text-slate-300">
+                    <p>Kills: ${player.kills || 0}</p>
+                    <p>Deaths: ${player.deaths || 0}</p>
+                    <p>K/D Ratio: ${((player.kills || 0) / Math.max(player.deaths || 1, 1)).toFixed(2)}</p>
+                    <p>Wins: ${player.wins || 0}</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add to document
+    document.body.appendChild(preview);
+
+    // Trigger reflow to enable transition
+    preview.offsetWidth;
+
+    // Show preview
+    preview.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+    preview.classList.add('opacity-100', 'scale-100');
+
+    // Add click outside listener to close preview
+    function closePreview(e) {
+        if (!preview.contains(e.target) && e.target !== event.target) {
+            preview.classList.add('opacity-0', 'scale-90', 'pointer-events-none');
+            preview.classList.remove('opacity-100', 'scale-100');
+            
+            // Remove the preview after animation
+            setTimeout(() => {
+                preview.remove();
+                document.removeEventListener('click', closePreview);
+            }, 300);
+        }
+    }
+
+    // Add listener after a short delay to prevent immediate closure
+    setTimeout(() => {
+        document.addEventListener('click', closePreview);
+    }, 50);
 }
 
 // Load initial leaderboard
